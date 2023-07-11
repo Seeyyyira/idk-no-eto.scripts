@@ -208,13 +208,63 @@ end)
 
 
 
-local bbbatusxxxddddd = game:service'VirtualUser'
 
-game:service'Players'.LocalPlayer.Idled:connect(function()
-	bbbatusxxxddddd:CaptureController()
-	bbbatusxxxddddd:ClickButton2(Vector2.new())
-end)
+local cloneref = cloneref or function(instance)
+    return instance
+end
 
+local function SafeGetService(service)
+    return cloneref(game:GetService(service))
+end
+
+local IdleAPI = (function()
+    local IdleTable = {}
+    local VirtualUser = SafeGetService("VirtualUser")
+    local Players = SafeGetService("Players")
+    local Client = Players.LocalPlayer or Players:GetPropertyChangedSignal("LocalPlayer"):Wait() or Players.LocalPlayer
+    IdleTable.__Connect = function()
+        IdleTable.__Connection = Client.Idled:Connect(function()
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new())
+        end)
+    end
+    IdleTable.SetStatus = function(c, d)
+        if c == IdleTable then
+            c = d
+        end
+        if typeof(c) == "string" then
+            c = #c > 0 and string.lower(c) ~= "false" and string.lower(c) ~= "nil"
+        end
+        if c then
+            if not IdleTable.__Connection then
+                IdleTable.__Connect()
+            end
+        else
+            if IdleTable.__Connection then
+                IdleTable.__Connection:Disconnect()
+            end
+        end
+        return IdleTable
+    end
+    IdleTable.Enable = function()
+        return IdleTable:SetStatus(true)
+    end
+    IdleTable.Disable = function()
+        return IdleTable:SetStatus(false)
+    end
+    IdleTable.On = IdleTable.Enable
+    IdleTable.Off = IdleTable.Disable
+    IdleTable.__Connection = nil
+    local e = {}
+    for f in next, IdleTable do
+        e[string.lower(f)] = f
+    end
+    return setmetatable({}, {__index = function(g, f)
+            return IdleTable[e[string.lower(f)]] or a[f]
+        end})
+end)()
+
+IdleAPI:Enable()
 
 
 
